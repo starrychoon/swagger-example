@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  shutdown: graceful
+  error:
+    include-message: always
+
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem:///test
+    username: admin
+  sql:
+    init:
+      schema-locations:
+        - classpath:sql/user_table.sql
+      data-locations:
+        - classpath:sql/users.sql
+
+logging:
+  config: classpath:logback-spring.xml
