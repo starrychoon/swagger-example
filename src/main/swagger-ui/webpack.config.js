@@ -1,7 +1,6 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const {CleanWebpackPlugin} = require('clean-webpack-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = (env) => {
   return {
@@ -22,21 +21,32 @@ module.exports = (env) => {
             loader: 'babel-loader',
             options: {
               presets: ['@babel/preset-env', '@babel/preset-react']
-            }
+            },
           },
         },
         {
           test: /\.yaml$/,
           use: [
-            {loader: 'json-loader'},
-            {loader: 'yaml-loader', options: {asJSON: true}}
+            {
+              loader: 'json-loader'
+            },
+            {
+              loader: 'yaml-loader',
+              options: {
+                asJSON: true
+              },
+            },
           ]
         },
         {
           test: /\.css$/,
           use: [
-            {loader: 'style-loader'},
-            {loader: 'css-loader'},
+            {
+              loader: 'style-loader'
+            },
+            {
+              loader: 'css-loader'
+            },
           ]
         }
       ]
@@ -45,8 +55,8 @@ module.exports = (env) => {
       new CleanWebpackPlugin(),
       new HtmlWebpackPlugin({
         template: 'index.html',
-        title: 'Swagger UI'
-      })
+        title: 'Swagger UI',
+      }),
     ],
     output: {
       filename: '[name].[contenthash].js',

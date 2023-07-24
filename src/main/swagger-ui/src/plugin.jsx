@@ -9,7 +9,7 @@ const CustomPlugin = (system) => {
     },
     fn: {
       opsFilter: (taggedOps, phrase) => {
-        // case insensitive match
+        // case-insensitive match
         return taggedOps.filter((val, key) => key.toLowerCase().includes(phrase.toLowerCase()))
       }
     }

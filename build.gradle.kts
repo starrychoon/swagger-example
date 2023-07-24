@@ -85,7 +85,7 @@ open class OpenApi3CustomExtension(project: Project) : OpenApiBaseExtension(proj
 
     companion object {
         const val name = "openapi3Custom"
-        private val VALID_SPEC_VERSIONS = setOf("3.0.1", "3.0.2", "3.0.3", "3.1.0")
+        private val VALID_SPEC_VERSIONS = setOf("3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.1.0")
     }
 }
 
@@ -187,7 +187,6 @@ kotlin {
 
 tasks {
     processResources {
-        dependsOn("npmBuild")
         into("static/swagger-ui") {
             from("src/main/swagger-ui/dist")
             from(openapi3Custom.outputFilePath)
@@ -196,6 +195,7 @@ tasks {
 
     register<NpmTask>("npmBuild") {
         args.set(listOf("run", "build"))
+        finalizedBy("processResources")
     }
 
     register<NpmTask>("npmStart") {
