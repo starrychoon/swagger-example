@@ -34,8 +34,8 @@ class UserProfileService(
                 Mono.error(
                     ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Username '$username' not found."
-                    )
+                        "Username '$username' not found.",
+                    ),
                 )
             }
     }

@@ -111,7 +111,7 @@ private class SizeConstraint(min: Int?, max: Int?) : Constraint(
 
 private class LengthConstraint(min: Int, max: Int) : Constraint(
     "org.hibernate.validator.constraints.Length",
-    mapOf("min" to min, "max" to max)
+    mapOf("min" to min, "max" to max),
 )
 
 private class MinConstraint(value: Int) : Constraint("javax.validation.constraints.Min", mapOf("value" to value))
@@ -120,7 +120,7 @@ private class MaxConstraint(value: Int) : Constraint("javax.validation.constrain
 
 private class PatternConstraint(pattern: String) : Constraint(
     "javax.validation.constraints.Pattern",
-    mapOf("pattern" to pattern)
+    mapOf("pattern" to pattern),
 )
 
 operator fun FieldDescriptors.plus(other: FieldDescriptors): FieldDescriptors {

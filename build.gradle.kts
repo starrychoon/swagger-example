@@ -5,6 +5,7 @@ import com.epages.restdocs.apispec.model.ResourceModel
 import com.github.gradle.node.npm.task.NpmTask
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.servers.Server
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     kotlin("jvm")
@@ -15,105 +16,10 @@ plugins {
     id("org.springframework.boot")
     id("io.spring.dependency-management")
 
-    id("com.epages.restdocs-api-spec")
+    id("org.jlleitschuh.gradle.ktlint")
+    id("com.epages.restdocs-api-spec") apply false
     id("com.github.node-gradle.node")
 }
-
-open class CustomRestdocsApiSpecPlugin : Plugin<Project> {
-
-    private fun <T : ApiSpecTask> T.applyWithCommonConfiguration(block: T.() -> Unit): T {
-        dependsOn("check")
-        group = "documentation"
-        block()
-        return this
-    }
-
-    override fun apply(project: Project) {
-        with(project) {
-            extensions.create(OpenApi3CustomExtension.name, OpenApi3CustomExtension::class.java, project)
-
-            afterEvaluate {
-                val openapi3Custom = extensions.findByName(OpenApi3CustomExtension.name) as OpenApi3CustomExtension
-                tasks.create<OpenApi3CustomTask>(OpenApi3CustomExtension.name).applyWithCommonConfiguration {
-                    description = "Aggregate resource fragments into an OpenAPI 3 specification"
-                    applyExtension(openapi3Custom)
-                }
-            }
-        }
-    }
-}
-
-open class OpenApi3CustomExtension(project: Project) : OpenApiBaseExtension(project) {
-
-    override var outputFileNamePrefix = "openapi3"
-    val outputFilePath: String
-        get() = "$outputDirectory/$outputFileNamePrefix.$format"
-    var specVersion: String = "3.0.1"
-        set(value) {
-            checkSpecVersion(value)
-            field = value
-        }
-
-    private var _servers: List<Server> = mutableListOf(Server().apply { url = "http://localhost" })
-    private var _contact: Contact? = null
-
-    val servers: List<Server>
-        get() = _servers
-
-    fun setServer(serverUrl: String) {
-        _servers = listOf(Server().apply { url = serverUrl })
-    }
-
-    fun setServers(vararg server: Server) {
-        setServers(server.toList())
-    }
-
-    fun setServers(servers: List<Server>) {
-        _servers = servers
-    }
-
-    val contact: Contact?
-        get() = _contact
-
-    fun setContact(contact: Contact) {
-        _contact = contact
-    }
-
-    private fun checkSpecVersion(specVersion: String) {
-        require(specVersion in VALID_SPEC_VERSIONS) { "Spec version must be one of $VALID_SPEC_VERSIONS." }
-    }
-
-    companion object {
-        const val name = "openapi3Custom"
-        private val VALID_SPEC_VERSIONS = setOf("3.0.1", "3.0.2", "3.0.3", "3.1.0")
-    }
-}
-
-open class OpenApi3CustomTask : OpenApi3Task() {
-
-    @Input
-    @Optional
-    var specVersion: String = "3.0.1"
-
-    fun applyExtension(extension: OpenApi3CustomExtension) {
-        super.applyExtension(extension)
-        servers = extension.servers
-        contact = extension.contact
-        specVersion = extension.specVersion
-    }
-
-    override fun generateSpecification(resourceModels: List<ResourceModel>): String {
-        val spec = super.generateSpecification(resourceModels)
-        // restdocs-api-spec이 OpenAPI spec version 설정을 지원할 때 제거
-        return spec.replaceFirst("openapi: 3.0.1", "openapi: $specVersion")
-    }
-}
-
-val Project.openapi3Custom: OpenApi3CustomExtension
-    get() = (this as ExtensionAware).extensions.getByName(OpenApi3CustomExtension.name) as OpenApi3CustomExtension
-
-fun Project.openapi3Custom(configure: Action<OpenApi3CustomExtension>): Unit =
-    (this as ExtensionAware).extensions.configure(OpenApi3CustomExtension.name, configure)
 
 apply<CustomRestdocsApiSpecPlugin>()
 
@@ -121,11 +27,18 @@ repositories {
     mavenCentral()
 }
 
+ktlint {
+    verbose.set(true)
+    reporters {
+        reporter(ReporterType.JSON)
+    }
+}
+
 node {
     nodeProjectDir.set(file("src/main/swagger-ui"))
 }
 
-openapi3Custom {
+openapi3 {
     title = "WebFlux APIs"
     description = "API documentation with WebFlux, RestDocs, restdocs-api-spec"
     tagDescriptionsPropertiesFile = "src/test/resources/docs/tags.yaml"

@@ -17,7 +17,6 @@ import org.example.swagger.user.presentation.response.UserResponse
 import org.example.swagger.user.presentation.response.fieldDescriptors
 import org.example.swagger.user.presentation.response.schema
 import org.example.swagger.user.query.UserSearchService
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
@@ -74,8 +73,8 @@ class UserRouterTest(
                             .responseSchema(PublicUserResponse.schema())
                             .responseFields(PublicUserResponse.fieldDescriptors("[]."))
                             .build(),
-                    )
-                )
+                    ),
+                ),
             )
     }
 
@@ -116,9 +115,9 @@ class UserRouterTest(
                             .requestFields(UserSignUpRequest.fieldDescriptors())
                             .responseSchema(UserResponse.schema())
                             .responseFields(UserResponse.fieldDescriptors())
-                            .build()
-                    )
-                )
+                            .build(),
+                    ),
+                ),
             )
     }
 
@@ -144,13 +143,13 @@ class UserRouterTest(
                             .pathParameters(
                                 parameterWithName("username")
                                     .type(SimpleType.STRING)
-                                    .description("The handle for the user account.")
+                                    .description("The handle for the user account."),
                             )
                             .responseSchema(UserResponse.schema())
                             .responseFields(UserResponse.fieldDescriptors())
-                            .build()
-                    )
-                )
+                            .build(),
+                    ),
+                ),
             )
     }
 
@@ -190,15 +189,15 @@ class UserRouterTest(
                             .pathParameters(
                                 parameterWithName("username")
                                     .type(SimpleType.STRING)
-                                    .description("The handle for the user account.")
+                                    .description("The handle for the user account."),
                             )
                             .requestSchema(UserProfileRequest.schema())
                             .requestFields(UserProfileRequest.fieldDescriptors())
                             .responseSchema(UserResponse.schema())
                             .responseFields(UserResponse.fieldDescriptors())
-                            .build()
-                    )
-                )
+                            .build(),
+                    ),
+                ),
             )
     }
 }
