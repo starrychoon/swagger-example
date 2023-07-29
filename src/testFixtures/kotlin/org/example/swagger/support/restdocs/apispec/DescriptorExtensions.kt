@@ -27,13 +27,20 @@ fun FieldDescriptor.enumType(enumValues: List<Any>): FieldDescriptor {
     return type(Attributes.ENUM_TYPE).attributes(key(Attributes.ENUM_VALUES_KEY).value(enumValues))
 }
 
+fun FieldDescriptor.required(): FieldDescriptor {
+    constraints += RequiredConstraint
+    return this
+}
+
+fun FieldDescriptor.notEmpty(): FieldDescriptor {
+    constraints += NotEmptyConstraint
+    return this
+}
+
 /**
  * Constrain for array type
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : AbstractDescriptor<T>> T.size(min: Int? = null, max: Int? = null): T {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
+fun FieldDescriptor.size(min: Int? = null, max: Int? = null): FieldDescriptor {
     constraints += SizeConstraint(min, max)
     return this
 }
@@ -41,10 +48,7 @@ fun <T : AbstractDescriptor<T>> T.size(min: Int? = null, max: Int? = null): T {
 /**
  * Constrain for string type
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : AbstractDescriptor<T>> T.length(min: Int? = null, max: Int? = null): T {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
+fun FieldDescriptor.length(min: Int, max: Int): FieldDescriptor {
     constraints += LengthConstraint(min, max)
     return this
 }
@@ -52,10 +56,7 @@ fun <T : AbstractDescriptor<T>> T.length(min: Int? = null, max: Int? = null): T 
 /**
  * Constraint for number type
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : AbstractDescriptor<T>> T.min(value: Int): T {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
+fun FieldDescriptor.min(value: Int): FieldDescriptor {
     constraints += MinConstraint(value)
     return this
 }
@@ -63,10 +64,7 @@ fun <T : AbstractDescriptor<T>> T.min(value: Int): T {
 /**
  * Constraint for number type
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : AbstractDescriptor<T>> T.max(value: Int): T {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
+fun FieldDescriptor.max(value: Int): FieldDescriptor {
     constraints += MaxConstraint(value)
     return this
 }
@@ -74,21 +72,14 @@ fun <T : AbstractDescriptor<T>> T.max(value: Int): T {
 /**
  * Constrain for string type
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : AbstractDescriptor<T>> T.pattern(pattern: String): T {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
+fun FieldDescriptor.pattern(pattern: String): FieldDescriptor {
     constraints += PatternConstraint(pattern)
     return this
 }
 
 @Suppress("UNCHECKED_CAST")
-fun FieldDescriptor.required(): FieldDescriptor {
-    val constraints =
-        attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
-    constraints += RequiredConstraint
-    return this
-}
+private val FieldDescriptor.constraints: MutableList<Constraint>
+    get() = attributes.computeIfAbsent(Attributes.CONSTRAINTS_KEY) { mutableListOf<Constraint>() } as MutableList<Constraint>
 
 fun FieldDescriptor.arrayType(type: ArrayItemsType): FieldDescriptor {
     return type(JsonFieldType.ARRAY).attributes(key(Attributes.ARRAY_ITEMS_TYPE_KEY).value(type))
@@ -111,12 +102,14 @@ enum class ArrayItemsType {
 // com.epages.restdocs.apispec.jsonschema.ConstraintResolver does not support jakarta 3.x
 private object RequiredConstraint : Constraint("javax.validation.constraints.NotNull", emptyMap())
 
+private object NotEmptyConstraint : Constraint("javax.validation.constraints.NotEmpty", emptyMap())
+
 private class SizeConstraint(min: Int?, max: Int?) : Constraint(
     "javax.validation.constraints.Size",
     mapOf("min" to min, "max" to max),
 )
 
-private class LengthConstraint(min: Int?, max: Int?) : Constraint(
+private class LengthConstraint(min: Int, max: Int) : Constraint(
     "org.hibernate.validator.constraints.Length",
     mapOf("min" to min, "max" to max)
 )
