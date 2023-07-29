@@ -85,7 +85,7 @@ open class OpenApi3CustomExtension(project: Project) : OpenApiBaseExtension(proj
 
     companion object {
         const val name = "openapi3Custom"
-        private val VALID_SPEC_VERSIONS = setOf("3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.1.0")
+        private val VALID_SPEC_VERSIONS = setOf("3.0.1", "3.0.2", "3.0.3", "3.1.0")
     }
 }
 
@@ -189,13 +189,14 @@ tasks {
     processResources {
         into("static/swagger-ui") {
             from("src/main/swagger-ui/dist")
-            from(openapi3Custom.outputFilePath)
+            from("build/api-spec/openapi3.yaml")
         }
+        // always copy files
+        outputs.upToDateWhen { false }
     }
 
     register<NpmTask>("npmBuild") {
         args.set(listOf("run", "build"))
-        finalizedBy("processResources")
     }
 
     register<NpmTask>("npmStart") {
@@ -204,5 +205,100 @@ tasks {
 
     test {
         useJUnitPlatform()
+        outputs.doNotCacheIf("build generated-snippets for openapi task") { true }
     }
 }
+
+open class CustomRestdocsApiSpecPlugin : Plugin<Project> {
+
+    private fun <T : ApiSpecTask> T.applyWithCommonConfiguration(block: T.() -> Unit): T {
+        dependsOn("check")
+        group = "documentation"
+        block()
+        return this
+    }
+
+    override fun apply(project: Project) {
+        with(project) {
+            extensions.create(OpenApi3CustomExtension.name, OpenApi3CustomExtension::class.java, project)
+
+            afterEvaluate {
+                val openapi3Custom = extensions.findByName(OpenApi3CustomExtension.name) as OpenApi3CustomExtension
+                tasks.create<OpenApi3CustomTask>(OpenApi3CustomExtension.name).applyWithCommonConfiguration {
+                    description = "Aggregate resource fragments into an OpenAPI 3 specification"
+                    applyExtension(openapi3Custom)
+                }
+            }
+        }
+    }
+}
+
+open class OpenApi3CustomExtension(project: Project) : OpenApiBaseExtension(project) {
+
+    override var outputFileNamePrefix = "openapi3"
+    var specVersion: String = "3.0.1"
+        set(value) {
+            checkSpecVersion(value)
+            field = value
+        }
+
+    private var _servers: List<Server> = mutableListOf(Server().apply { url = "http://localhost" })
+    private var _contact: Contact? = null
+
+    val servers: List<Server>
+        get() = _servers
+
+    fun setServer(serverUrl: String) {
+        _servers = listOf(Server().apply { url = serverUrl })
+    }
+
+    fun setServers(vararg server: Server) {
+        setServers(server.toList())
+    }
+
+    fun setServers(servers: List<Server>) {
+        _servers = servers
+    }
+
+    val contact: Contact?
+        get() = _contact
+
+    fun setContact(contact: Contact) {
+        _contact = contact
+    }
+
+    private fun checkSpecVersion(specVersion: String) {
+        require(specVersion in VALID_SPEC_VERSIONS) { "Spec version must be one of $VALID_SPEC_VERSIONS." }
+    }
+
+    companion object {
+        const val name = "openapi3"
+        private val VALID_SPEC_VERSIONS = setOf("3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.1.0")
+    }
+}
+
+open class OpenApi3CustomTask : OpenApi3Task() {
+
+    @Input
+    @Optional
+    var specVersion: String = "3.0.1"
+
+    fun applyExtension(extension: OpenApi3CustomExtension) {
+        super.applyExtension(extension)
+        servers = extension.servers
+        contact = extension.contact
+        specVersion = extension.specVersion
+    }
+
+    override fun generateSpecification(resourceModels: List<ResourceModel>): String {
+        val spec = super.generateSpecification(resourceModels)
+        // restdocs-api-spec이 OpenAPI spec version 설정을 지원할 때 제거
+        return spec.replaceFirst("openapi: 3.0.1", "openapi: $specVersion")
+    }
+}
+
+val Project.openapi3: OpenApi3CustomExtension
+    get() = (this as ExtensionAware).extensions.getByName(OpenApi3CustomExtension.name) as OpenApi3CustomExtension
+
+fun Project.openapi3(configure: Action<OpenApi3CustomExtension>): Unit =
+    (this as ExtensionAware).extensions.configure(OpenApi3CustomExtension.name, configure)
